@@ -2,8 +2,15 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>泰盧固語聽說練習</title>
+<meta name="description" content="泰盧固語聽說互動練習平台">
+<meta name="theme-color" content="#2E75B6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Telugu練習">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--pri:#2E75B6;--pri-d:#1a5a8f;--bg:#f5f7fa;--card:#fff;--text:#333;--muted:#888;--border:#e0e4ea;--success:#27ae60;--danger:#e74c3c;--warn:#f39c12}
@@ -100,12 +107,37 @@ nav button.active{background:var(--pri);color:#fff;border-color:var(--pri)}
 /* TTS indicator */
 .tts-note{text-align:center;font-size:.8em;color:var(--muted);padding:4px 0}
 
-/* Responsive */
+/* Responsive - Mobile */
 @media(max-width:600px){
-  .flashcard .main{font-size:1.5em}
-  .quiz .options{grid-template-columns:1fr}
-  nav button{font-size:.75em;padding:6px 10px}
-  .modes button{padding:8px 14px;font-size:.85em}
+  body{font-size:15px}
+  .app{padding:8px}
+  header{padding:16px 0 10px}
+  header h1{font-size:1.4em}
+  nav{gap:6px;padding:10px 0}
+  nav button{font-size:.72em;padding:5px 9px;border-radius:16px}
+  .modes{gap:6px;padding:10px 0;flex-wrap:wrap}
+  .modes button{padding:8px 12px;font-size:.8em}
+  .card-area{padding:10px 0;min-height:280px}
+  .flashcard{padding:24px 16px;min-height:200px;border-radius:12px}
+  .flashcard .main{font-size:1.4em}
+  .flashcard .sub{font-size:1em}
+  .flashcard .reveal{font-size:1.2em}
+  .controls{flex-wrap:wrap;gap:8px;padding:10px 0}
+  .controls button{padding:10px 16px;font-size:.9em;flex:1;min-width:0}
+  .dialogue{padding:16px;border-radius:12px;margin-bottom:12px}
+  .dialogue h3{font-size:1em;margin-bottom:10px}
+  .d-line{padding:8px 0;font-size:.9em}
+  .d-roman{display:block;margin-top:2px}
+  .d-approx{display:block;margin-top:2px}
+  .quiz{padding:20px 16px;border-radius:12px}
+  .quiz .q-prompt{font-size:1.3em}
+  .quiz .options{grid-template-columns:1fr;gap:8px}
+  .quiz .opt{padding:12px}
+  .listen{padding:20px 16px;border-radius:12px}
+  .listen .target{font-size:1.4em}
+  .listen .speak-btn{width:64px;height:64px;font-size:1.6em;padding:16px}
+  .stats{flex-wrap:wrap;gap:8px}
+  .stats span{font-size:.8em}
 }
 </style>
 </head>
@@ -876,6 +908,11 @@ function renderTranslate() {
 renderNav();
 renderModes();
 render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
