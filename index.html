@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>泰盧固語聽說練習</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pri:#2E75B6;--pri-d:#1a5a8f;--bg:#f5f7fa;--card:#fff;--text:#333;--muted:#888;--border:#e0e4ea;--success:#27ae60;--danger:#e74c3c;--warn:#f39c12}
+body{font-family:'Microsoft JhengHei','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:900px;margin:0 auto;padding:16px}
+
+/* Header */
+header{text-align:center;padding:24px 0 16px;border-bottom:2px solid var(--pri)}
+header h1{font-size:1.8em;color:var(--pri)}
+header p{color:var(--muted);margin-top:4px}
+
+/* Navigation */
+nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:16px 0;border-bottom:1px solid var(--border)}
+nav button{padding:8px 14px;border:2px solid var(--border);border-radius:20px;background:var(--card);cursor:pointer;font-size:.85em;transition:.2s}
+nav button:hover{border-color:var(--pri);color:var(--pri)}
+nav button.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+/* Mode selector */
+.modes{display:flex;gap:12px;justify-content:center;padding:16px 0}
+.modes button{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:1em;font-weight:bold;transition:.2s}
+.modes button.m-flash{background:#e8f4fd;color:var(--pri)}
+.modes button.m-dialog{background:#fef3e2;color:#e67e22}
+.modes button.m-quiz{background:#eafaf1;color:var(--success)}
+.modes button.m-listen{background:#fde8e8;color:var(--danger)}
+.modes button.active{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+/* Card area */
+.card-area{padding:20px 0;min-height:400px}
+
+/* Flashcard */
+.flashcard{background:var(--card);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:40px;text-align:center;cursor:pointer;user-select:none;transition:.3s;position:relative;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.flashcard:hover{box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.flashcard .label{font-size:.8em;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.flashcard .main{font-size:2em;font-weight:bold;margin:12px 0}
+.flashcard .sub{font-size:1.2em;color:var(--muted);margin:8px 0}
+.flashcard .reveal{font-size:1.4em;color:var(--pri);margin:12px 0}
+.flashcard .hint{font-size:.85em;color:var(--muted);position:absolute;bottom:16px}
+.flashcard .counter{position:absolute;top:16px;right:20px;font-size:.8em;color:var(--muted)}
+
+/* Controls */
+.controls{display:flex;gap:12px;justify-content:center;padding:16px 0}
+.controls button{padding:12px 28px;border:none;border-radius:8px;cursor:pointer;font-size:1em;font-weight:bold;transition:.2s}
+.btn-prev{background:#e0e4ea;color:var(--text)}
+.btn-next{background:var(--pri);color:#fff}
+.btn-speak{background:var(--warn);color:#fff}
+.btn-shuffle{background:#9b59b6;color:#fff}
+.controls button:hover{opacity:.85;transform:translateY(-1px)}
+.controls button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* Dialogue */
+.dialogue{background:var(--card);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:24px;margin-bottom:16px}
+.dialogue h3{color:var(--pri);margin-bottom:16px;font-size:1.1em}
+.d-line{padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.2s}
+.d-line:last-child{border-bottom:none}
+.d-line:hover{background:#f8f9fb;border-radius:8px;padding-left:8px}
+.d-speaker{font-weight:bold;color:var(--pri);margin-right:8px}
+.d-roman{font-style:italic}
+.d-approx{color:var(--muted);font-size:.9em}
+.d-trans{color:var(--pri);font-size:.9em;margin-top:4px;padding-left:24px;display:none}
+.d-line.show .d-trans{display:block}
+
+/* Quiz */
+.quiz{background:var(--card);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:32px;text-align:center}
+.quiz .q-prompt{font-size:1.6em;font-weight:bold;margin:16px 0}
+.quiz .q-sub{color:var(--muted);margin-bottom:24px}
+.quiz .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px;margin:0 auto}
+.quiz .opt{padding:16px;border:2px solid var(--border);border-radius:12px;cursor:pointer;font-size:1em;transition:.2s;background:var(--card)}
+.quiz .opt:hover{border-color:var(--pri);background:#f0f7ff}
+.quiz .opt.correct{border-color:var(--success);background:#eafaf1;color:var(--success)}
+.quiz .opt.wrong{border-color:var(--danger);background:#fde8e8;color:var(--danger)}
+.quiz .score{font-size:1.2em;margin:16px 0;color:var(--pri)}
+.quiz .result{margin-top:16px;font-size:1.1em;min-height:2em}
+
+/* Listen mode */
+.listen{background:var(--card);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);padding:32px;text-align:center}
+.listen .prompt{font-size:1.1em;color:var(--muted);margin-bottom:16px}
+.listen .target{font-size:1.8em;font-weight:bold;margin:16px 0}
+.listen .approx{font-size:1.2em;color:var(--muted)}
+.listen .speak-btn{padding:20px 40px;border:none;border-radius:50%;cursor:pointer;font-size:2em;background:var(--danger);color:#fff;margin:24px 0;transition:.2s;display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px}
+.listen .speak-btn:hover{transform:scale(1.1)}
+.listen .speak-btn.recording{background:#c0392b;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,.4)}50%{box-shadow:0 0 0 16px rgba(231,76,60,0)}}
+.listen .feedback{font-size:1.1em;min-height:2em;margin-top:12px}
+
+/* Stats bar */
+.stats{display:flex;gap:16px;justify-content:center;padding:8px 0;font-size:.85em;color:var(--muted)}
+.stats span{background:var(--card);padding:4px 12px;border-radius:12px;border:1px solid var(--border)}
+
+/* Progress bar */
+.progress{height:4px;background:var(--border);border-radius:2px;margin:8px 0;overflow:hidden}
+.progress .bar{height:100%;background:var(--pri);transition:.3s;border-radius:2px}
+
+/* TTS indicator */
+.tts-note{text-align:center;font-size:.8em;color:var(--muted);padding:4px 0}
+
+/* Responsive */
+@media(max-width:600px){
+  .flashcard .main{font-size:1.5em}
+  .quiz .options{grid-template-columns:1fr}
+  nav button{font-size:.75em;padding:6px 10px}
+  .modes button{padding:8px 14px;font-size:.85em}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>తెలుగు Telugu 泰盧固語</h1>
+    <p>聽說練習互動平台</p>
+  </header>
+  <nav id="lessonNav"></nav>
+  <div class="modes" id="modeBar"></div>
+  <div class="progress"><div class="bar" id="progressBar" style="width:0%"></div></div>
+  <div class="stats" id="statsBar"></div>
+  <div class="card-area" id="cardArea"></div>
+  <div class="controls" id="controlBar"></div>
+  <div class="tts-note" id="ttsNote"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const lessons = [
+  {
+    id: 0, title: "發音基礎",
+    vocab: [
+      {roman:"a",approx:"阿（短）",zh:"短元音 a",ex:"adi (阿迪) = 那個",te:"అ"},
+      {roman:"aa / ā",approx:"啊（長）",zh:"長元音 aa",ex:"aam (啊姆) = 芒果",te:"ఆ"},
+      {roman:"i",approx:"伊（短）",zh:"短元音 i",ex:"idi (伊迪) = 這個",te:"ఇ"},
+      {roman:"ee / ī",approx:"衣（長）",zh:"長元音 ee",ex:"neelu (尼魯) = 水",te:"ఈ"},
+      {roman:"u",approx:"烏（短）",zh:"短元音 u",ex:"undi (溫迪) = 有",te:"ఉ"},
+      {roman:"oo / ū",approx:"嗚（長）",zh:"長元音 oo",ex:"ooru (歐茹) = 村莊",te:"ఊ"},
+      {roman:"ka",approx:"卡",zh:"不送氣 k",ex:"kalam (卡拉姆) = 筆",te:"క"},
+      {roman:"kha",approx:"卡（送氣）",zh:"送氣 kh",ex:"kharam (卡拉姆) = 費用",te:"ఖ"},
+      {roman:"ga",approx:"嘎",zh:"不送氣 g",ex:"gadi (嘎迪) = 鐘",te:"గ"},
+      {roman:"pa",approx:"趴",zh:"不送氣 p",ex:"pani (趴尼) = 工作",te:"ప"},
+      {roman:"ba",approx:"巴",zh:"不送氣 b",ex:"baagu (巴谷) = 好",te:"బ"},
+      {roman:"ma",approx:"嗎",zh:"輔音 m",ex:"manchi (曼奇) = 好的",te:"మ"},
+      {roman:"ra",approx:"拉（彈舌）",zh:"彈舌 r",ex:"randi (蘭迪) = 請來",te:"ర"},
+      {roman:"la",approx:"拉",zh:"輔音 l",ex:"lēdu (累杜) = 沒有",te:"ల"},
+      {roman:"va",approx:"瓦",zh:"輔音 v/w",ex:"vēlu (威盧) = 手指",te:"వ"},
+    ],
+    dialogues: [
+      {title:"發音練習詞彙",lines:[
+        {s:"練習",r:"namaskāram",a:"納馬斯卡拉姆",t:"你好（正式）",te:"నమస్కారం"},
+        {s:"練習",r:"nēnu",a:"內努",t:"我",te:"నేను"},
+        {s:"練習",r:"mīru",a:"米茹",t:"您",te:"మీరు"},
+        {s:"練習",r:"dhanyavādālu",a:"丹亞瓦達盧",t:"謝謝",te:"ధన్యవాదాలు"},
+        {s:"練習",r:"avunu",a:"阿伍努",t:"是的",te:"అవును"},
+        {s:"練習",r:"kādu",a:"卡杜",t:"不是",te:"కాదు"},
+        {s:"練習",r:"baagundi",a:"巴貢迪",t:"好的",te:"బాగుంది"},
+        {s:"練習",r:"neellu",a:"尼魯",t:"水",te:"నీళ్ళు"},
+        {s:"練習",r:"annam",a:"安南",t:"飯",te:"అన్నం"},
+        {s:"練習",r:"vellu",a:"威魯",t:"去",te:"వెళ్ళు"},
+      ]}
+    ]
+  },
+  {
+    id: 1, title: "問候與自我介紹",
+    vocab: [
+      {roman:"namaskāram",approx:"納馬斯卡拉姆",zh:"你好（正式）",ex:"見面打招呼",te:"నమస్కారం"},
+      {roman:"bāgunnārā?",approx:"巴貢那拉？",zh:"你好嗎？",ex:"對平輩/朋友",te:"బాగున్నారా"},
+      {roman:"bāgunnānu",approx:"巴貢那努",zh:"我很好",ex:"回答你好嗎",te:"బాగున్నాను"},
+      {roman:"dhanyavādālu",approx:"丹亞瓦達盧",zh:"謝謝",ex:"表示感謝",te:"ధన్యవాదాలు"},
+      {roman:"kshaminchaṇḍi",approx:"克夏敏恰恩迪",zh:"對不起",ex:"道歉",te:"క్షమించండి"},
+      {roman:"parwālēdu",approx:"帕瓦累杜",zh:"沒關係",ex:"回應道歉",te:"పర్వాలేదు"},
+      {roman:"shari",approx:"夏利",zh:"好的/可以",ex:"表示同意",te:"సరే"},
+      {roman:"nā pēru ___",approx:"那 陪茹 ___",zh:"我的名字是___",ex:"自我介紹",te:"నా పేరు"},
+      {roman:"mī pēru ēmiṭi?",approx:"米 陪茹 欸咪提？",zh:"您叫什麼名字？",ex:"詢問姓名",te:"మీ పేరు ఏమిటి"},
+      {roman:"shubharātri",approx:"舒巴拉特利",zh:"晚安",ex:"晚上道別",te:"శుభరాత్రి"},
+      {roman:"marḷī kaluddam",approx:"馬力 卡路丹",zh:"再見/下次見",ex:"告別",te:"మళ్ళీ కలుద్దాం"},
+      {roman:"dayachēsi",approx:"達亞切希",zh:"請",ex:"禮貌請求",te:"దయచేసి"},
+      {roman:"nēnu ___ nundi vachānu",approx:"內努 ___ 努恩迪 瓦恰努",zh:"我從___來的",ex:"說明來自哪裡",te:"నేను నుండి వచ్చాను"},
+      {roman:"mīku Telugu vachā?",approx:"米庫 特盧古 瓦恰？",zh:"您會泰盧固語嗎？",ex:"詢問語言能力",te:"మీకు తెలుగు వచ్చా"},
+      {roman:"koncham koncham vachhu",approx:"空恰姆 空恰姆 瓦丘",zh:"會一點點",ex:"表示會一些",te:"కొంచం కొంచం వచ్చు"},
+    ],
+    dialogues: [
+      {title:"初次見面",lines:[
+        {s:"A",r:"Namaskāram!",a:"納馬斯卡拉姆！",t:"你好！",te:"నమస్కారం"},
+        {s:"B",r:"Namaskāram! Bāgunnārā?",a:"巴貢那拉？",t:"你好！你好嗎？",te:"నమస్కారం! బాగున్నారా?"},
+        {s:"A",r:"Bāgunnānu, dhanyavādālu. Mīru?",a:"巴貢那努，丹亞瓦達盧。米茹？",t:"我很好，謝謝。您呢？",te:"బాగున్నాను, ధన్యవాదాలు. మీరు?"},
+        {s:"B",r:"Nēnu kūḍā bāgunnānu.",a:"內努 庫達 巴貢那努",t:"我也很好。",te:"నేను కూడా బాగున్నాను"},
+        {s:"A",r:"Nā pēru Xiaoming. Mī pēru ēmiṭi?",a:"那 陪茹 小明。米 陪茹 欸咪提？",t:"我叫小明。您叫什麼？",te:"నా పేరు. మీ పేరు ఏమిటి?"},
+        {s:"B",r:"Nā pēru Ravi. Mimmalni kalavaḍam santōsham.",a:"那 陪茹 拉維",t:"我叫拉維。很高興認識你。",te:"నా పేరు రవి. మిమ్మల్ని కలవడం సంతోషం"},
+      ]},
+      {title:"語言程度",lines:[
+        {s:"A",r:"Mīku Telugu vachā?",a:"米庫 特盧古 瓦恰？",t:"您會泰盧固語嗎？",te:"మీకు తెలుగు వచ్చా?"},
+        {s:"B",r:"Koncham koncham vachhu.",a:"空恰姆 空恰姆 瓦丘",t:"會一點點。",te:"కొంచం కొంచం వచ్చు"},
+        {s:"A",r:"Chālā bāgundi!",a:"恰拉 巴貢迪！",t:"很好！",te:"చాలా బాగుంది"},
+        {s:"B",r:"Dayachēsi mellaga cheppandi.",a:"達亞切希 梅拉嘎 且潘迪",t:"請說慢一點。",te:"దయచేసి మెల్లగా చెప్పండి"},
+      ]},
+    ]
+  },
+  {
+    id: 2, title: "數字時間日期",
+    vocab: [
+      {roman:"okati",approx:"歐卡提",zh:"1",ex:"一",te:"ఒకటి"},
+      {roman:"rendu",approx:"蘭杜",zh:"2",ex:"二",te:"రెండు"},
+      {roman:"mūdu",approx:"木杜",zh:"3",ex:"三",te:"మూడు"},
+      {roman:"nālugu",approx:"那盧古",zh:"4",ex:"四",te:"నాలుగు"},
+      {roman:"aidu",approx:"愛杜",zh:"5",ex:"五",te:"ఐదు"},
+      {roman:"āru",approx:"阿茹",zh:"6",ex:"六",te:"ఆరు"},
+      {roman:"ēdu",approx:"欸杜",zh:"7",ex:"七",te:"ఏడు"},
+      {roman:"enimidi",approx:"欸尼咪迪",zh:"8",ex:"八",te:"ఎనిమిది"},
+      {roman:"tommidi",approx:"透咪迪",zh:"9",ex:"九",te:"తొమ్మిది"},
+      {roman:"padi",approx:"趴迪",zh:"10",ex:"十",te:"పది"},
+      {roman:"iruvai",approx:"伊茹外",zh:"20",ex:"二十",te:"ఇరవై"},
+      {roman:"muppai",approx:"母派",zh:"30",ex:"三十",te:"ముప్పై"},
+      {roman:"yābhai",approx:"亞拜",zh:"50",ex:"五十",te:"యాభై"},
+      {roman:"nooru / vanda",approx:"努茹 / 完達",zh:"100",ex:"一百",te:"నూరు"},
+      {roman:"ganta",approx:"甘塔",zh:"小時",ex:"時間單位",te:"గంట"},
+      {roman:"rūpāyilu",approx:"茹趴衣盧",zh:"盧比",ex:"印度貨幣",te:"రూపాయిలు"},
+      {roman:"eerōju",approx:"衣肉朱",zh:"今天",ex:"時間",te:"ఈరోజు"},
+      {roman:"rēpu",approx:"累噗",zh:"明天",ex:"時間",te:"రేపు"},
+      {roman:"ninna",approx:"寧那",zh:"昨天",ex:"時間",te:"నిన్న"},
+      {roman:"Sōmavāram",approx:"受馬瓦拉姆",zh:"星期一",ex:"星期",te:"సోమవారం"},
+    ],
+    dialogues: [
+      {title:"問時間",lines:[
+        {s:"A",r:"Ippudu enni gantalu?",a:"伊噗杜 嫩尼 甘塔盧？",t:"現在幾點？",te:"ఇప్పుడు ఎన్ని గంటలు?"},
+        {s:"B",r:"Ippudu mūdu gantalu.",a:"伊噗杜 木杜 甘塔盧",t:"現在3點。",te:"ఇప్పుడు మూడు గంటలు"},
+        {s:"A",r:"Dhanyavādālu!",a:"丹亞瓦達盧！",t:"謝謝！",te:"ధన్యవాదాలు"},
+      ]},
+      {title:"約時間",lines:[
+        {s:"A",r:"Mēmu eppudu kaluddām?",a:"梅木 欸噗杜 卡路丹？",t:"我們什麼時候見面？",te:"మేము ఎప్పుడు కలుద్దాం?"},
+        {s:"B",r:"Rēpu udayam padi gantalu ki.",a:"累噗 烏達亞姆 趴迪 甘塔盧 基",t:"明天早上10點。",te:"రేపు ఉదయం పది గంటలకి"},
+        {s:"A",r:"Shari, rēpu kaluddām!",a:"夏利，累噗 卡路丹！",t:"好，明天見！",te:"సరే, రేపు కలుద్దాం"},
+      ]},
+    ]
+  },
+  {
+    id: 3, title: "日常基本句型",
+    vocab: [
+      {roman:"avunu",approx:"阿伍努",zh:"是的",ex:"肯定",te:"అవును"},
+      {roman:"kādu",approx:"卡杜",zh:"不是",ex:"否定",te:"కాదు"},
+      {roman:"undi",approx:"溫迪",zh:"有/在",ex:"存在",te:"ఉంది"},
+      {roman:"lēdu",approx:"累杜",zh:"沒有/不在",ex:"不存在",te:"లేదు"},
+      {roman:"kāvāli",approx:"卡瓦力",zh:"要/需要",ex:"需求",te:"కావాలి"},
+      {roman:"vaddhu",approx:"瓦杜",zh:"不要",ex:"拒絕",te:"వద్దు"},
+      {roman:"telusu",approx:"特路蘇",zh:"知道",ex:"認知",te:"తెలుసు"},
+      {roman:"telīyadu",approx:"特利亞杜",zh:"不知道",ex:"不認知",te:"తెలీయదు"},
+      {roman:"ishtam",approx:"伊施淡",zh:"喜歡",ex:"偏好",te:"ఇష్టం"},
+      {roman:"ēmi",approx:"欸咪",zh:"什麼",ex:"疑問詞",te:"ఏమి"},
+      {roman:"ekkada",approx:"欸卡達",zh:"哪裡",ex:"疑問詞",te:"ఎక్కడ"},
+      {roman:"eppudu",approx:"欸噗杜",zh:"什麼時候",ex:"疑問詞",te:"ఎప్పుడు"},
+      {roman:"enduku",approx:"嫩杜庫",zh:"為什麼",ex:"疑問詞",te:"ఎందుకు"},
+      {roman:"evaru",approx:"欸瓦茹",zh:"誰",ex:"疑問詞",te:"ఎవరు"},
+      {roman:"entha",approx:"嫩塔",zh:"多少",ex:"疑問詞",te:"ఎంత"},
+      {roman:"idi",approx:"伊迪",zh:"這個",ex:"指示詞",te:"ఇది"},
+      {roman:"adi",approx:"阿迪",zh:"那個",ex:"指示詞",te:"అది"},
+      {roman:"ikkada",approx:"伊卡達",zh:"這裡",ex:"地點",te:"ఇక్కడ"},
+      {roman:"akkada",approx:"阿卡達",zh:"那裡",ex:"地點",te:"అక్కడ"},
+    ],
+    dialogues: [
+      {title:"在商店",lines:[
+        {s:"客人",r:"Idi ēmiṭi?",a:"伊迪 欸咪提？",t:"這是什麼？",te:"ఇది ఏమిటి?"},
+        {s:"店員",r:"Idi biryani masala.",a:"伊迪 比爾亞尼 馬薩拉",t:"這是燉飯香料。",te:"ఇది బిర్యానీ మసాలా"},
+        {s:"客人",r:"Entha?",a:"嫩塔？",t:"多少錢？",te:"ఎంత?"},
+        {s:"店員",r:"Nooru rūpāyilu.",a:"努茹 茹趴衣盧",t:"一百盧比。",te:"నూరు రూపాయిలు"},
+        {s:"客人",r:"Shari, nāku okati kāvāli.",a:"夏利，那庫 歐卡提 卡瓦力",t:"好，我要一個。",te:"సరే, నాకు ఒకటి కావాలి"},
+      ]},
+      {title:"表達需求",lines:[
+        {s:"A",r:"Nāku coffee kāvāli. Sugar vaddhu.",a:"那庫 咖啡 卡瓦力。蘇嘎 瓦杜",t:"我要咖啡。不要糖。",te:"నాకు కాఫీ కావాలి. షుగర్ వద్దు"},
+        {s:"B",r:"Milk kāvālā?",a:"米爾克 卡瓦拉？",t:"要牛奶嗎？",te:"మిల్క్ కావాలా?"},
+        {s:"A",r:"Avunu, koncham.",a:"阿伍努，空恰姆",t:"是的，一點。",te:"అవును, కొంచం"},
+      ]},
+    ]
+  },
+  {
+    id: 4, title: "購物與殺價",
+    vocab: [
+      {roman:"entha?",approx:"嫩塔？",zh:"多少錢？",ex:"問價",te:"ఎంత"},
+      {roman:"chālā ekkuva!",approx:"恰拉 欸酷瓦！",zh:"太貴了！",ex:"殺價",te:"చాలా ఎక్కువ"},
+      {roman:"takkuva chēyandi",approx:"塔酷瓦 切楊迪",zh:"請便宜一點",ex:"殺價",te:"తక్కువ చేయండి"},
+      {roman:"nēnu ___ istānu",approx:"內努 ___ 伊斯塔努",zh:"我出___",ex:"出價",te:"నేను ఇస్తాను"},
+      {roman:"shari, teesukuntānu",approx:"夏利，帝蘇坤塔努",zh:"好，我要了",ex:"成交",te:"సరే, తీసుకుంటాను"},
+      {roman:"vaddhu, idi vaddhu",approx:"瓦杜，伊迪 瓦杜",zh:"不用了",ex:"拒絕",te:"వద్దు, ఇది వద్దు"},
+      {roman:"dongalu",approx:"東嘎盧",zh:"衣服",ex:"商品",te:"దొంగలు"},
+      {roman:"pandlu",approx:"潘德盧",zh:"水果",ex:"商品",te:"పండ్లు"},
+      {roman:"kūragāyalu",approx:"酷拉嘎亞盧",zh:"蔬菜",ex:"商品",te:"కూరగాయలు"},
+      {roman:"kilō",approx:"基囉",zh:"公斤",ex:"單位",te:"కిలో"},
+    ],
+    dialogues: [
+      {title:"在水果攤",lines:[
+        {s:"你",r:"Māmidi pandlu entha?",a:"馬咪迪 潘德盧 嫩塔？",t:"芒果多少錢？",te:"మామిడి పండ్లు ఎంత?"},
+        {s:"攤販",r:"Oka kilō nooru rūpāyilu.",a:"歐卡 基囉 努茹 茹趴衣盧",t:"一公斤一百盧比。",te:"ఒక కిలో నూరు రూపాయిలు"},
+        {s:"你",r:"Chālā ekkuva! Yābhai chēyandi.",a:"恰拉 欸酷瓦！亞拜 切楊迪",t:"太貴了！算五十吧。",te:"చాలా ఎక్కువ! యాభై చేయండి"},
+        {s:"攤販",r:"Enabhai ki istānu. Last rate.",a:"欸那拜 基 伊斯塔努",t:"八十給你。最低價了。",te:"ఎనభై కి ఇస్తాను"},
+        {s:"你",r:"Shari, rendu kilōlu ivvandi.",a:"夏利，蘭杜 基囉盧 伊萬迪",t:"好，給我兩公斤。",te:"సరే, రెండు కిలోలు ఇవ్వండి"},
+      ]},
+    ]
+  },
+  {
+    id: 5, title: "飲食與點餐",
+    vocab: [
+      {roman:"annam",approx:"安南",zh:"白飯",ex:"主食",te:"అన్నం"},
+      {roman:"biryani",approx:"比爾亞尼",zh:"印度燉飯",ex:"海德拉巴名菜",te:"బిర్యానీ"},
+      {roman:"dōsa",approx:"多薩",zh:"南印薄餅",ex:"早餐",te:"దోస"},
+      {roman:"idlī",approx:"伊德利",zh:"蒸糕",ex:"早餐",te:"ఇడ్లీ"},
+      {roman:"sambar",approx:"桑巴",zh:"豆蔬菜湯",ex:"配菜",te:"సాంబార్"},
+      {roman:"neellu",approx:"尼魯",zh:"水",ex:"飲料",te:"నీళ్ళు"},
+      {roman:"chāi",approx:"恰伊",zh:"茶",ex:"飲料",te:"చాయ్"},
+      {roman:"kāfī",approx:"卡菲",zh:"咖啡",ex:"飲料",te:"కాఫీ"},
+      {roman:"kāram",approx:"卡拉姆",zh:"辣",ex:"口味",te:"కారం"},
+      {roman:"kāram vaddhu",approx:"卡拉姆 瓦杜",zh:"不要辣",ex:"口味偏好",te:"కారం వద్దు"},
+      {roman:"kāram takkuvaga",approx:"卡拉姆 塔酷瓦嘎",zh:"少辣",ex:"口味偏好",te:"కారం తక్కువగా"},
+      {roman:"bill ivvandi",approx:"比爾 伊萬迪",zh:"請給帳單",ex:"結帳",te:"బిల్లు ఇవ్వండి"},
+      {roman:"chālā baagundi!",approx:"恰拉 巴貢迪！",zh:"非常好吃！",ex:"稱讚",te:"చాలా బాగుంది"},
+    ],
+    dialogues: [
+      {title:"在餐廳點餐",lines:[
+        {s:"服務生",r:"Ēmi kāvāli?",a:"欸咪 卡瓦力？",t:"要什麼？",te:"ఏమి కావాలి?"},
+        {s:"你",r:"Nāku oka chicken biryani ivvandi.",a:"那庫 歐卡 去肯 比爾亞尼 伊萬迪",t:"請給我一份雞肉燉飯。",te:"నాకు ఒక చికెన్ బిర్యానీ ఇవ్వండి"},
+        {s:"服務生",r:"Kāram ekkuvagā kāvālā?",a:"卡拉姆 欸酷瓦嘎 卡瓦拉？",t:"要很辣嗎？",te:"కారం ఎక్కువగా కావాలా?"},
+        {s:"你",r:"Kāram takkuvaga chēyandi.",a:"卡拉姆 塔酷瓦嘎 切楊迪",t:"請做少辣的。",te:"కారం తక్కువగా చేయండి"},
+        {s:"你",r:"Chālā baagundi! Bill ivvandi.",a:"恰拉 巴貢迪！比爾 伊萬迪",t:"非常好吃！請給帳單。",te:"చాలా బాగుంది! బిల్లు ఇవ్వండి"},
+      ]},
+    ]
+  },
+  {
+    id: 6, title: "交通與問路",
+    vocab: [
+      {roman:"auto",approx:"阿透",zh:"嘟嘟車",ex:"交通工具",te:"ఆటో"},
+      {roman:"bus",approx:"巴斯",zh:"公車",ex:"交通工具",te:"బస్సు"},
+      {roman:"train",approx:"特潤",zh:"火車",ex:"交通工具",te:"రైలు"},
+      {roman:"eḍama",approx:"欸達馬",zh:"左邊",ex:"方向",te:"ఎడమ"},
+      {roman:"right",approx:"萊特",zh:"右邊",ex:"方向",te:"కుడి"},
+      {roman:"straight / munduku",approx:"門杜庫",zh:"直走",ex:"方向",te:"ముందుకు"},
+      {roman:"dūram",approx:"杜拉姆",zh:"遠",ex:"距離",te:"దూరం"},
+      {roman:"dāggara",approx:"達嘎拉",zh:"近",ex:"距離",te:"దగ్గర"},
+      {roman:"ikkada āpandi",approx:"伊卡達 阿潘迪",zh:"請在這裡停",ex:"搭車",te:"ఇక్కడ ఆపండి"},
+      {roman:"___ ki elā vellāli?",approx:"___ 基 欸拉 威拉力？",zh:"去___怎麼走？",ex:"問路",te:"కి ఎలా వెళ్ళాలి"},
+      {roman:"___ ki entha?",approx:"___ 基 嫩塔？",zh:"去___多少錢？",ex:"問車費",te:"కి ఎంత"},
+      {roman:"meter vēyandi",approx:"米特 維楊迪",zh:"請跳表",ex:"搭車",te:"మీటర్ వేయండి"},
+    ],
+    dialogues: [
+      {title:"搭嘟嘟車",lines:[
+        {s:"你",r:"Auto! Charminar ki veltārā?",a:"阿透！恰米那 基 威爾塔拉？",t:"嘟嘟車！去查米納嗎？",te:"ఆటో! చార్మినార్ కి వెళ్తారా?"},
+        {s:"司機",r:"Avunu, ekku.",a:"阿伍努，欸酷",t:"好，上來。",te:"అవును, ఎక్కు"},
+        {s:"你",r:"Entha avtundi?",a:"嫩塔 阿烏吞迪？",t:"多少錢？",te:"ఎంత అవుతుంది?"},
+        {s:"司機",r:"Nooru rūpāyilu.",a:"努茹 茹趴衣盧",t:"一百盧比。",te:"నూరు రూపాయిలు"},
+        {s:"你",r:"Ekkuva! Yābhai ki vellu.",a:"欸酷瓦！亞拜 基 威盧",t:"太貴了！五十去。",te:"ఎక్కువ! యాభై కి వెళ్ళు"},
+        {s:"你",r:"Ikkada āpandi.",a:"伊卡達 阿潘迪",t:"這裡停。",te:"ఇక్కడ ఆపండి"},
+      ]},
+      {title:"問路",lines:[
+        {s:"你",r:"Station ki elā vellāli?",a:"斯得遜 基 欸拉 威拉力？",t:"火車站怎麼去？",te:"స్టేషన్ కి ఎలా వెళ్ళాలి?"},
+        {s:"路人",r:"Straight vellandi, signal daggara left.",a:"斯特蕊特 威蘭迪，希格那爾 達嘎拉 累弗特",t:"直走，紅綠燈左轉。",te:"స్ట్రెయిట్ వెళ్ళండి, సిగ్నల్ దగ్గర ఎడమ"},
+        {s:"你",r:"Entha dūram?",a:"嫩塔 杜拉姆？",t:"有多遠？",te:"ఎంత దూరం?"},
+        {s:"路人",r:"Aidu nimishālu. Dāggare.",a:"愛杜 尼米夏盧。達嘎蕊",t:"五分鐘。很近。",te:"ఐదు నిమిషాలు. దగ్గరే"},
+      ]},
+    ]
+  },
+  {
+    id: 7, title: "住宿與旅行",
+    vocab: [
+      {roman:"room available undā?",approx:"茹姆 阿維拉布爾 溫達？",zh:"有空房嗎？",ex:"訂房",te:"రూమ్ అవైలబుల్ ఉందా?"},
+      {roman:"oka rātri ki entha?",approx:"歐卡 拉特利 基 嫩塔？",zh:"一晚多少？",ex:"問價",te:"ఒక రాత్రి కి ఎంత?"},
+      {roman:"AC room",approx:"AC 茹姆",zh:"冷氣房",ex:"房型",te:"ఏసీ రూమ్"},
+      {roman:"WiFi undā?",approx:"外法伊 溫達？",zh:"有WiFi嗎？",ex:"設施",te:"వైఫై ఉందా?"},
+      {roman:"checkout chēstānu",approx:"切考特 切斯塔努",zh:"我要退房",ex:"退房",te:"చెకౌట్ చేస్తాను"},
+      {roman:"hot water rāvaḍam lēdu",approx:"哈特 瓦特 拉瓦當 累杜",zh:"沒有熱水",ex:"問題",te:"హాట్ వాటర్ రావడం లేదు"},
+      {roman:"photo teesukōvachhā?",approx:"佛透 帝蘇扣瓦恰？",zh:"可以拍照嗎？",ex:"觀光",te:"ఫోటో తీసుకోవచ్చా?"},
+      {roman:"ikkada ēmi chūḍāli?",approx:"伊卡達 欸咪 丘達力？",zh:"這裡有什麼好看的？",ex:"觀光",te:"ఇక్కడ ఏమి చూడాలి?"},
+    ],
+    dialogues: [
+      {title:"旅館入住",lines:[
+        {s:"你",r:"Room available undā?",a:"茹姆 阿維拉布爾 溫達？",t:"有空房嗎？",te:"రూమ్ అవైలబుల్ ఉందా?"},
+        {s:"櫃台",r:"Avunu. AC kāvālā?",a:"阿伍努。AC 卡瓦拉？",t:"有。要冷氣房嗎？",te:"అవును. ఏసీ కావాలా?"},
+        {s:"你",r:"AC room. Oka rātri ki entha?",a:"AC 茹姆。歐卡 拉特利 基 嫩塔？",t:"冷氣房。一晚多少？",te:"ఏసీ రూమ్. ఒక రాత్రి కి ఎంత?"},
+        {s:"櫃台",r:"Rendu vēla rūpāyilu.",a:"蘭杜 維拉 茹趴衣盧",t:"兩千盧比。",te:"రెండు వేల రూపాయిలు"},
+        {s:"你",r:"WiFi undā?",a:"外法伊 溫達？",t:"有WiFi嗎？",te:"వైఫై ఉందా?"},
+        {s:"櫃台",r:"Avunu, free WiFi undi.",a:"阿伍努，佛利 外法伊 溫迪",t:"有，免費WiFi。",te:"అవును, ఫ్రీ వైఫై ఉంది"},
+      ]},
+    ]
+  },
+  {
+    id: 8, title: "家庭與社交",
+    vocab: [
+      {roman:"nānnā",approx:"那那",zh:"爸爸",ex:"家人",te:"నాన్న"},
+      {roman:"ammā",approx:"阿媽",zh:"媽媽",ex:"家人",te:"అమ్మ"},
+      {roman:"anna / annayya",approx:"安那",zh:"哥哥",ex:"家人",te:"అన్నయ్య"},
+      {roman:"akka",approx:"阿卡",zh:"姊姊",ex:"家人",te:"అక్క"},
+      {roman:"tammudu",approx:"塔木杜",zh:"弟弟",ex:"家人",te:"తమ్ముడు"},
+      {roman:"chelli",approx:"切力",zh:"妹妹",ex:"家人",te:"చెల్లి"},
+      {roman:"snēhitudu",approx:"斯內希杜杜",zh:"朋友（男）",ex:"社交",te:"స్నేహితుడు"},
+      {roman:"pillalu",approx:"皮拉盧",zh:"孩子們",ex:"家人",te:"పిల్లలు"},
+      {roman:"mā intiki randi",approx:"馬 印提基 蘭迪",zh:"請來我們家",ex:"邀請",te:"మా ఇంటికి రండి"},
+      {roman:"chālā manchidi!",approx:"恰拉 曼奇迪！",zh:"非常好！",ex:"稱讚",te:"చాలా మంచిది"},
+      {roman:"santōsham",approx:"桑透香",zh:"開心",ex:"感受",te:"సంతోషం"},
+      {roman:"idi mī kōsam",approx:"伊迪 米 扣桑",zh:"這是給您的",ex:"送禮",te:"ఇది మీ కోసం"},
+    ],
+    dialogues: [
+      {title:"拜訪朋友家",lines:[
+        {s:"你",r:"Namaskāram aunty! Idi mī kōsam.",a:"納馬斯卡拉姆 安提！伊迪 米 扣桑",t:"阿姨好！這是給您的。",te:"నమస్కారం ఆంటీ! ఇది మీ కోసం"},
+        {s:"阿姨",r:"Aiyō, enduku ibbandi? Rā, lōpaliki rā.",a:"唉唷，嫩杜庫 伊邦迪？拉，囉帕力基 拉",t:"何必客氣？來，進來。",te:"అయ్యో, ఎందుకు ఇబ్బంది? రా, లోపలికి రా"},
+        {s:"你",r:"Mī intlu chālā andamgā undi!",a:"米 印特盧 恰拉 安達姆嘎 溫迪！",t:"你家好漂亮！",te:"మీ ఇంట్లో చాలా అందంగా ఉంది"},
+        {s:"阿姨",r:"Dhanyavādālu! Coffee tāgutāvā?",a:"丹亞瓦達盧！咖啡 塔古塔瓦？",t:"謝謝！喝咖啡嗎？",te:"ధన్యవాదాలు! కాఫీ తాగుతావా?"},
+        {s:"你",r:"Avunu, dhanyavādālu aunty.",a:"阿伍努，丹亞瓦達盧 安提",t:"好的，謝謝阿姨。",te:"అవును, ధన్యవాదాలు ఆంటీ"},
+      ]},
+    ]
+  },
+  {
+    id: 9, title: "緊急狀況",
+    vocab: [
+      {roman:"help chēyandi!",approx:"黑爾普 切楊迪！",zh:"請幫忙！",ex:"求助",te:"హెల్ప్ చేయండి"},
+      {roman:"doctor kāvāli",approx:"達克特 卡瓦力",zh:"需要醫生",ex:"緊急",te:"డాక్టర్ కావాలి"},
+      {roman:"hospital ki teesukellandi",approx:"哈斯皮透 基 帝蘇凱蘭迪",zh:"帶我去醫院",ex:"緊急",te:"హాస్పిటల్ కి తీసుకెళ్ళండి"},
+      {roman:"police ki call chēyandi",approx:"破力斯 基 考爾 切楊迪",zh:"叫警察",ex:"緊急",te:"పోలీసులకి కాల్ చేయండి"},
+      {roman:"nāku ōllu baagalēdu",approx:"那庫 歐盧 巴嘎累杜",zh:"我身體不舒服",ex:"不適",te:"నాకు ఒళ్ళు బాగాలేదు"},
+      {roman:"nāku tala nōppigā undi",approx:"那庫 塔拉 諾皮嘎 溫迪",zh:"我頭痛",ex:"症狀",te:"నాకు తల నొప్పిగా ఉంది"},
+      {roman:"nāku kaḍupu nōppigā undi",approx:"那庫 卡杜噗 諾皮嘎 溫迪",zh:"我肚子痛",ex:"症狀",te:"నాకు కడుపు నొప్పిగా ఉంది"},
+      {roman:"nēnu dāri tappipōyānu",approx:"內努 達利 塔皮波亞努",zh:"我迷路了",ex:"求助",te:"నేను దారి తప్పిపోయాను"},
+      {roman:"nā ___ potundi",approx:"那 ___ 波吞迪",zh:"我的___丟了",ex:"失物",te:"నా పోతుంది"},
+      {roman:"donga!",approx:"東嘎！",zh:"小偷！",ex:"緊急",te:"దొంగ"},
+    ],
+    dialogues: [
+      {title:"在藥局",lines:[
+        {s:"你",r:"Nāku ōllu baagalēdu.",a:"那庫 歐盧 巴嘎累杜",t:"我身體不舒服。",te:"నాకు ఒళ్ళు బాగాలేదు"},
+        {s:"藥師",r:"Ēmi ayyindi?",a:"欸咪 愛因迪？",t:"怎麼了？",te:"ఏమి అయ్యింది?"},
+        {s:"你",r:"Jvaram undi, tala nōppigā undi.",a:"基瓦拉姆 溫迪，塔拉 諾皮嘎 溫迪",t:"發燒，頭也痛。",te:"జ్వరం ఉంది, తల నొప్పిగా ఉంది"},
+        {s:"藥師",r:"Paracetamol teesukōndi. Rōjuki mūdu sārlu.",a:"帕拉希塔莫 帝蘇扣恩迪。肉朱基 木杜 薩路",t:"吃撲熱息痛。一天三次。",te:"పారాసెటమాల్ తీసుకోండి. రోజుకి మూడు సార్లు"},
+      ]},
+      {title:"迷路求助",lines:[
+        {s:"你",r:"Nēnu dāri tappipōyānu. Help chēyandi.",a:"內努 達利 塔皮波亞努。黑爾普 切楊迪",t:"我迷路了。請幫忙。",te:"నేను దారి తప్పిపోయాను. హెల్ప్ చేయండి"},
+        {s:"路人",r:"Ekkadiki vellāli?",a:"欸卡迪基 威拉力？",t:"要去哪裡？",te:"ఎక్కడికి వెళ్ళాలి?"},
+        {s:"你",r:"Nā hotel ki. Hotel Taj.",a:"那 哈帖爾 基。哈帖爾 塔基",t:"去我的旅館。Taj旅館。",te:"నా హోటల్ కి. హోటల్ తాజ్"},
+        {s:"路人",r:"Dāggare. Nēnu chūpistānu, randi.",a:"達嘎蕊。內努 丘皮斯塔努，蘭迪",t:"很近。我帶你去，跟我來。",te:"దగ్గరే. నేను చూపిస్తాను, రండి"},
+      ]},
+    ]
+  },
+];
+
+// ==================== STATE ====================
+let currentLesson = 0;
+let currentMode = 'flash'; // flash, dialog, quiz, listen
+let cardIndex = 0;
+let revealed = false;
+let shuffled = false;
+let quizScore = 0;
+let quizTotal = 0;
+let quizAnswered = false;
+let speechSynth = window.speechSynthesis;
+let recognition = null;
+let vocabOrder = [];
+
+// ==================== TTS ====================
+function speak(text) {
+  if (!speechSynth) return;
+  speechSynth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'te-IN';
+  u.rate = 0.8;
+  const voices = speechSynth.getVoices();
+  const teVoice = voices.find(v => v.lang.startsWith('te'));
+  if (teVoice) u.voice = teVoice;
+  speechSynth.speak(u);
+}
+
+function checkTTS() {
+  const voices = speechSynth ? speechSynth.getVoices() : [];
+  const hasTe = voices.some(v => v.lang.startsWith('te'));
+  const note = document.getElementById('ttsNote');
+  if (hasTe) {
+    note.textContent = '🔊 已偵測到泰盧固語語音引擎，點擊「朗讀」按鈕可聽發音';
+  } else {
+    note.textContent = '💡 提示：安裝 Google Chrome 並啟用泰盧固語語音套件可獲得更好的聽力體驗';
+  }
+}
+
+if (speechSynth) {
+  speechSynth.onvoiceschanged = checkTTS;
+  setTimeout(checkTTS, 500);
+}
+
+// ==================== RENDER ====================
+function renderNav() {
+  const nav = document.getElementById('lessonNav');
+  nav.innerHTML = lessons.map((l, i) =>
+    `<button class="${i === currentLesson ? 'active' : ''}" onclick="switchLesson(${i})">${l.title}</button>`
+  ).join('');
+}
+
+function renderModes() {
+  const bar = document.getElementById('modeBar');
+  const modes = [
+    {id:'flash',label:'📇 單字卡',cls:'m-flash'},
+    {id:'dialog',label:'💬 情境對話',cls:'m-dialog'},
+    {id:'quiz',label:'🎯 測驗',cls:'m-quiz'},
+    {id:'listen',label:'🎤 跟讀',cls:'m-listen'},
+  ];
+  bar.innerHTML = modes.map(m =>
+    `<button class="${m.cls} ${m.id === currentMode ? 'active' : ''}" onclick="switchMode('${m.id}')">${m.label}</button>`
+  ).join('');
+}
+
+function getVocab() {
+  const v = lessons[currentLesson].vocab;
+  if (!shuffled || vocabOrder.length !== v.length) {
+    vocabOrder = v.map((_, i) => i);
+  }
+  return vocabOrder.map(i => v[i]);
+}
+
+function renderFlashcard() {
+  const vocab = getVocab();
+  if (!vocab.length) { document.getElementById('cardArea').innerHTML = '<p>此課無單字卡</p>'; return; }
+  const item = vocab[cardIndex % vocab.length];
+  const total = vocab.length;
+  const idx = cardIndex % total;
+  document.getElementById('progressBar').style.width = ((idx + 1) / total * 100) + '%';
+  document.getElementById('statsBar').innerHTML = `<span>第 ${idx + 1} / ${total} 張</span>`;
+
+  const area = document.getElementById('cardArea');
+  area.innerHTML = `
+    <div class="flashcard" onclick="flipCard()">
+      <div class="counter">${idx + 1}/${total}</div>
+      <div class="label">中文意思</div>
+      <div class="main">${item.zh}</div>
+      <div class="sub">${item.ex}</div>
+      ${revealed ? `
+        <div style="border-top:1px dashed #ddd;width:80%;margin:12px 0"></div>
+        <div class="label">泰盧固語</div>
+        <div class="reveal">${item.roman}</div>
+        <div class="sub">（${item.approx}）</div>
+      ` : `<div class="hint">👆 點擊翻面查看答案</div>`}
+    </div>`;
+
+  const ctrl = document.getElementById('controlBar');
+  ctrl.innerHTML = `
+    <button class="btn-prev" onclick="prevCard()" ${idx === 0 ? 'disabled' : ''}>⬅ 上一張</button>
+    <button class="btn-speak" onclick="speak('${item.te}')">🔊 朗讀</button>
+    <button class="btn-shuffle" onclick="toggleShuffle()">${shuffled ? '🔢 順序' : '🔀 隨機'}</button>
+    <button class="btn-next" onclick="nextCard()">下一張 ➡</button>`;
+}
+
+function renderDialogue() {
+  const dialogs = lessons[currentLesson].dialogues;
+  const area = document.getElementById('cardArea');
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('statsBar').innerHTML = `<span>${dialogs.length} 段對話</span><span>點擊每行顯示翻譯</span>`;
+
+  area.innerHTML = dialogs.map(d => `
+    <div class="dialogue">
+      <h3>🎭 ${d.title}</h3>
+      ${d.lines.map((l, i) => `
+        <div class="d-line" onclick="this.classList.toggle('show')">
+          <span class="d-speaker">${l.s}：</span>
+          <span class="d-roman">${l.r}</span>
+          <span class="d-approx">（${l.a}）</span>
+          <span style="cursor:pointer;margin-left:8px" onclick="event.stopPropagation();speak('${l.te}')">🔊</span>
+          <div class="d-trans">→ ${l.t}</div>
+        </div>
+      `).join('')}
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="toggleAllLines(this)" style="padding:6px 16px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;font-size:.85em">顯示/隱藏全部翻譯</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('controlBar').innerHTML = '';
+}
+
+function renderQuiz() {
+  const vocab = lessons[currentLesson].vocab;
+  if (vocab.length < 4) { document.getElementById('cardArea').innerHTML = '<p>此課單字不足，無法測驗</p>'; return; }
+
+  const idx = cardIndex % vocab.length;
+  const correct = vocab[idx];
+  document.getElementById('progressBar').style.width = ((quizTotal > 0 ? quizTotal : 1) / vocab.length * 100) + '%';
+  document.getElementById('statsBar').innerHTML = `<span>答對 ${quizScore} / ${quizTotal}</span><span>正確率 ${quizTotal ? Math.round(quizScore/quizTotal*100) : 0}%</span>`;
+
+  // Generate 4 options with correct answer
+  let options = [correct];
+  let pool = vocab.filter((_, i) => i !== idx);
+  while (options.length < 4 && pool.length > 0) {
+    const ri = Math.floor(Math.random() * pool.length);
+    options.push(pool.splice(ri, 1)[0]);
+  }
+  // Shuffle options
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+
+  const area = document.getElementById('cardArea');
+  area.innerHTML = `
+    <div class="quiz">
+      <div class="q-sub">這個泰盧固語是什麼意思？</div>
+      <div class="q-prompt">${correct.roman}</div>
+      <div class="q-sub">（${correct.approx}）</div>
+      <div class="options">
+        ${options.map(o => `
+          <div class="opt" onclick="checkQuiz(this,'${o.zh.replace(/'/g,"\\'")}','${correct.zh.replace(/'/g,"\\'")}')">
+            ${o.zh}
+          </div>
+        `).join('')}
+      </div>
+      <div class="result" id="quizResult"></div>
+    </div>`;
+
+  document.getElementById('controlBar').innerHTML = `
+    <button class="btn-speak" onclick="speak('${correct.te}')">🔊 朗讀</button>
+    <button class="btn-next" onclick="nextQuiz()" id="nextQuizBtn" disabled>下一題 ➡</button>`;
+}
+
+function renderListen() {
+  const vocab = lessons[currentLesson].vocab;
+  if (!vocab.length) { document.getElementById('cardArea').innerHTML = '<p>此課無練習詞彙</p>'; return; }
+  const idx = cardIndex % vocab.length;
+  const item = vocab[idx];
+  document.getElementById('progressBar').style.width = ((idx + 1) / vocab.length * 100) + '%';
+  document.getElementById('statsBar').innerHTML = `<span>第 ${idx + 1} / ${vocab.length} 個</span>`;
+
+  const area = document.getElementById('cardArea');
+  area.innerHTML = `
+    <div class="listen">
+      <div class="prompt">先聽發音，然後跟著大聲說出來：</div>
+      <div class="target">${item.roman}</div>
+      <div class="approx">（${item.approx}）</div>
+      <div style="margin-top:8px;color:var(--pri)">${item.zh}</div>
+      <div>
+        <button class="speak-btn" onclick="speak('${item.te}')">🔊</button>
+      </div>
+      <div class="prompt" style="margin-top:16px">點擊上方按鈕聽發音，然後大聲跟讀 3 遍</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button onclick="this.style.background='var(--success)';this.style.color='#fff';this.textContent='✓ 第1遍'" style="padding:8px 16px;border:2px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer">第 1 遍</button>
+        <button onclick="this.style.background='var(--success)';this.style.color='#fff';this.textContent='✓ 第2遍'" style="padding:8px 16px;border:2px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer">第 2 遍</button>
+        <button onclick="this.style.background='var(--success)';this.style.color='#fff';this.textContent='✓ 第3遍'" style="padding:8px 16px;border:2px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer">第 3 遍</button>
+      </div>
+    </div>`;
+
+  document.getElementById('controlBar').innerHTML = `
+    <button class="btn-prev" onclick="prevCard()" ${idx === 0 ? 'disabled' : ''}>⬅ 上一個</button>
+    <button class="btn-next" onclick="nextCard()">下一個 ➡</button>`;
+}
+
+// ==================== ACTIONS ====================
+function switchLesson(i) {
+  currentLesson = i;
+  cardIndex = 0;
+  revealed = false;
+  quizScore = 0;
+  quizTotal = 0;
+  quizAnswered = false;
+  shuffled = false;
+  vocabOrder = lessons[i].vocab.map((_, idx) => idx);
+  renderNav();
+  render();
+}
+
+function switchMode(m) {
+  currentMode = m;
+  cardIndex = 0;
+  revealed = false;
+  quizScore = 0;
+  quizTotal = 0;
+  quizAnswered = false;
+  renderModes();
+  render();
+}
+
+function render() {
+  if (currentMode === 'flash') renderFlashcard();
+  else if (currentMode === 'dialog') renderDialogue();
+  else if (currentMode === 'quiz') renderQuiz();
+  else if (currentMode === 'listen') renderListen();
+}
+
+function flipCard() { revealed = !revealed; render(); }
+function nextCard() { cardIndex++; revealed = false; render(); }
+function prevCard() { if (cardIndex > 0) cardIndex--; revealed = false; render(); }
+
+function toggleShuffle() {
+  shuffled = !shuffled;
+  if (shuffled) {
+    vocabOrder = lessons[currentLesson].vocab.map((_, i) => i);
+    for (let i = vocabOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [vocabOrder[i], vocabOrder[j]] = [vocabOrder[j], vocabOrder[i]];
+    }
+  } else {
+    vocabOrder = lessons[currentLesson].vocab.map((_, i) => i);
+  }
+  cardIndex = 0;
+  revealed = false;
+  render();
+}
+
+function checkQuiz(el, selected, correct) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  quizTotal++;
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach(o => {
+    if (o.textContent.trim() === correct) o.classList.add('correct');
+  });
+  if (selected === correct) {
+    quizScore++;
+    el.classList.add('correct');
+    document.getElementById('quizResult').innerHTML = '✅ 正確！';
+  } else {
+    el.classList.add('wrong');
+    document.getElementById('quizResult').innerHTML = `❌ 答案是：${correct}`;
+  }
+  document.getElementById('nextQuizBtn').disabled = false;
+  document.getElementById('statsBar').innerHTML = `<span>答對 ${quizScore} / ${quizTotal}</span><span>正確率 ${Math.round(quizScore/quizTotal*100)}%</span>`;
+}
+
+function nextQuiz() {
+  quizAnswered = false;
+  // Pick random next
+  const vocab = lessons[currentLesson].vocab;
+  cardIndex = Math.floor(Math.random() * vocab.length);
+  render();
+}
+
+function toggleAllLines(btn) {
+  const dialogue = btn.closest('.dialogue');
+  const lines = dialogue.querySelectorAll('.d-line');
+  const allShown = [...lines].every(l => l.classList.contains('show'));
+  lines.forEach(l => {
+    if (allShown) l.classList.remove('show');
+    else l.classList.add('show');
+  });
+}
+
+// ==================== INIT ====================
+renderNav();
+renderModes();
+render();
+</script>
+</body>
+</html>
