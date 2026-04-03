@@ -28,6 +28,7 @@ nav button.active{background:var(--pri);color:#fff;border-color:var(--pri)}
 .modes button.m-dialog{background:#fef3e2;color:#e67e22}
 .modes button.m-quiz{background:#eafaf1;color:var(--success)}
 .modes button.m-listen{background:#fde8e8;color:var(--danger)}
+.modes button.m-translate{background:#e8f4e8;color:#27ae60}
 .modes button.active{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.15)}
 
 /* Card area */
@@ -492,6 +493,7 @@ function renderModes() {
     {id:'dialog',label:'💬 情境對話',cls:'m-dialog'},
     {id:'quiz',label:'🎯 測驗',cls:'m-quiz'},
     {id:'listen',label:'🎤 跟讀',cls:'m-listen'},
+    {id:'translate',label:'✍️ 翻譯',cls:'m-translate'},
   ];
   bar.innerHTML = modes.map(m =>
     `<button class="${m.cls} ${m.id === currentMode ? 'active' : ''}" onclick="switchMode('${m.id}')">${m.label}</button>`
@@ -669,6 +671,7 @@ function render() {
   else if (currentMode === 'dialog') renderDialogue();
   else if (currentMode === 'quiz') renderQuiz();
   else if (currentMode === 'listen') renderListen();
+  else if (currentMode === 'translate') renderTranslate();
 }
 
 function flipCard() { revealed = !revealed; render(); }
@@ -727,6 +730,146 @@ function toggleAllLines(btn) {
     if (allShown) l.classList.remove('show');
     else l.classList.add('show');
   });
+}
+
+// ==================== TRANSLATE & GRAMMAR (Gemini API) ====================
+
+function getApiKey() {
+  return localStorage.getItem('gemini_api_key') || '';
+}
+function saveApiKey(key) {
+  localStorage.setItem('gemini_api_key', key);
+}
+
+async function translateText() {
+  const input = document.getElementById('zhInput').value.trim();
+  if (!input) return;
+
+  let apiKey = getApiKey();
+  if (!apiKey) {
+    const k = prompt('請輸入你的 Google AI Studio API Key：');
+    if (!k) return;
+    saveApiKey(k);
+    apiKey = k;
+  }
+
+  const resultDiv = document.getElementById('translateResult');
+  resultDiv.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">翻譯中...</div>';
+
+  const systemPrompt = `你是泰盧固語教學助手。用戶輸入中文句子，你需要：
+1. 翻譯成泰盧固語（Telugu script）
+2. 提供羅馬拼音（romanization）
+3. 提供中文近似發音
+4. 對翻譯結果進行詳細的語法分析，逐詞拆解
+
+請嚴格按照以下 JSON 格式回覆（不要加 markdown 標記）：
+{
+  "telugu": "泰盧固語翻譯",
+  "roman": "羅馬拼音",
+  "approx": "中文近似發音",
+  "grammar_note": "整句語法結構說明（如語序、時態等）",
+  "words": [
+    {"te": "泰盧固語詞", "roman": "羅馬拼音", "pos": "詞性", "zh": "中文意思", "note": "語法說明（如格變化、動詞變位等）"}
+  ]
+}`;
+
+  try {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{parts: [{text: `${systemPrompt}\n\n中文句子：${input}`}]}],
+        generationConfig: {temperature: 0.2, maxOutputTokens: 1024}
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      if (resp.status === 400 || resp.status === 403) {
+        localStorage.removeItem('gemini_api_key');
+        throw new Error('API Key 無效，請重新輸入');
+      }
+      throw new Error(err.error?.message || '翻譯失敗');
+    }
+
+    const data = await resp.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Parse JSON from response (handle markdown code blocks)
+    let jsonStr = rawText;
+    const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) jsonStr = jsonMatch[1];
+    jsonStr = jsonStr.trim();
+
+    const result = JSON.parse(jsonStr);
+
+    let html = `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+        <div style="font-size:.85em;color:var(--muted);margin-bottom:4px">中文</div>
+        <div style="font-size:1.1em;margin-bottom:16px">${input}</div>
+        <div style="font-size:.85em;color:var(--muted);margin-bottom:4px">తెలుగు 泰盧固語</div>
+        <div style="font-size:1.5em;color:var(--pri);margin-bottom:6px">${result.telugu}</div>
+        <div style="font-size:1em;color:var(--muted);margin-bottom:4px">${result.roman}</div>
+        <div style="font-size:.95em;margin-bottom:12px">（${result.approx}）</div>
+        <button onclick="speak('${result.telugu.replace(/'/g,"\\'")}')" style="padding:8px 20px;border:2px solid var(--pri);border-radius:8px;background:var(--card);color:var(--pri);cursor:pointer;font-size:1em">🔊 朗讀</button>
+      </div>`;
+
+    // Grammar analysis
+    if (result.words && result.words.length > 0) {
+      html += `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+        <div style="font-size:1.1em;font-weight:600;margin-bottom:8px">📖 語法分析</div>
+        <div style="font-size:.9em;color:var(--muted);margin-bottom:14px">${result.grammar_note || ''}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.9em">
+          <tr style="background:var(--pri);color:#fff">
+            <th style="padding:8px;text-align:left;border-radius:6px 0 0 0">泰盧固語</th>
+            <th style="padding:8px;text-align:left">羅馬拼音</th>
+            <th style="padding:8px;text-align:left">詞性</th>
+            <th style="padding:8px;text-align:left">中文</th>
+            <th style="padding:8px;text-align:left;border-radius:0 6px 0 0">語法說明</th>
+          </tr>
+          ${result.words.map((w, i) => `
+          <tr style="background:${i % 2 === 0 ? 'var(--bg)' : 'var(--card)'}">
+            <td style="padding:8px;font-size:1.1em">${w.te}</td>
+            <td style="padding:8px;color:var(--muted)">${w.roman}</td>
+            <td style="padding:8px"><span style="background:var(--pri);color:#fff;padding:2px 8px;border-radius:4px;font-size:.8em">${w.pos}</span></td>
+            <td style="padding:8px">${w.zh}</td>
+            <td style="padding:8px;font-size:.85em;color:#555">${w.note || ''}</td>
+          </tr>`).join('')}
+        </table>
+      </div>`;
+    }
+
+    resultDiv.innerHTML = html;
+  } catch (e) {
+    resultDiv.innerHTML = `<div style="text-align:center;padding:20px;color:#e74c3c">翻譯失敗：${e.message}</div>`;
+  }
+}
+
+function renderTranslate() {
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('statsBar').innerHTML = '<span>輸入中文，AI 翻譯成泰盧固語並分析語法</span>';
+  document.getElementById('controlBar').innerHTML = '';
+
+  const area = document.getElementById('cardArea');
+  const prevInput = document.getElementById('zhInput')?.value || '';
+  const prevResult = document.getElementById('translateResult')?.innerHTML || '';
+  const hasKey = !!getApiKey();
+
+  area.innerHTML = `
+    <div style="max-width:640px;margin:0 auto">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="zhInput" type="text" value="${prevInput.replace(/"/g,'&quot;')}" placeholder="輸入中文句子，例如：我想喝水"
+          style="flex:1;padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:1em;outline:none;transition:border .2s"
+          onfocus="this.style.borderColor='var(--pri)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')translateText()">
+        <button onclick="translateText()" style="padding:12px 24px;background:var(--pri);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:1em;white-space:nowrap">翻譯 →</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button onclick="const k=prompt('請輸入 Google AI Studio API Key：',getApiKey());if(k!==null){saveApiKey(k);alert('已儲存')}" style="font-size:.75em;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;color:var(--muted)">⚙️ ${hasKey ? '更換 API Key' : '設定 API Key'}</button>
+      </div>
+      <div id="translateResult">${prevResult}</div>
+    </div>`;
 }
 
 // ==================== INIT ====================
